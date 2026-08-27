@@ -26,14 +26,15 @@ export default function Developer() {
           ></motion.div>
         </div>
 
-        {/* Profile Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="max-w-md mx-auto glass p-8 rounded-2xl border border-brand-border/20 shadow-cyan-glow flex flex-col items-center gap-6"
-        >
+        {/* Profile Cards */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="glass rounded-2xl border border-brand-border/20 p-8 outline outline-1 outline-brand-cyan/25 outline-offset-4 shadow-cyan-glow flex flex-col items-center gap-6"
+          >
           {/* Circular avatar image placeholder using creative vector elements */}
           <div className="relative h-28 w-28 rounded-full border-2 border-brand-cyan shadow-cyan-glow-intense flex items-center justify-center bg-[#071A26] overflow-hidden group">
             <span className="text-3xl font-extrabold text-brand-cyan group-hover:scale-110 transition-transform select-none">
@@ -77,7 +78,57 @@ export default function Developer() {
               <Mail size={20} />
             </a>
           </div>
-        </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.12 }}
+            className="glass rounded-2xl border border-brand-border/20 p-8 outline outline-1 outline-brand-cyan/25 outline-offset-4 shadow-cyan-glow flex flex-col items-center gap-6"
+          >
+            <div className="relative h-28 w-28 rounded-full border-2 border-brand-cyan shadow-cyan-glow-intense flex items-center justify-center bg-[#071A26] overflow-hidden group">
+              <span className="text-3xl font-extrabold text-brand-cyan group-hover:scale-110 transition-transform select-none">
+                RDB
+              </span>
+              <div className="absolute inset-0 bg-gradient-cyan-blue opacity-0 group-hover:opacity-20 transition-opacity"></div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-extrabold text-brand-text-white">Raghav Deepak Behere</h3>
+              <p className="text-sm font-semibold text-brand-cyan">Graphics and Logic designer</p>
+            </div>
+
+            <p className="text-sm text-brand-text-muted leading-relaxed font-medium">
+              Building open-source educational software to make complex computer science topics accessible and engaging for college students and engineering beginners.
+            </p>
+
+            <div className="flex items-center gap-4 pt-4 border-t border-brand-border/30 w-full justify-center">
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noreferrer"
+                className="p-2.5 bg-brand-bg-primary border border-brand-border/40 text-brand-text-muted hover:text-brand-cyan hover:border-brand-cyan/60 rounded-xl transition-all"
+              >
+                <Github size={20} />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="p-2.5 bg-brand-bg-primary border border-brand-border/40 text-brand-text-muted hover:text-brand-cyan hover:border-brand-cyan/60 rounded-xl transition-all"
+              >
+                <Linkedin size={20} />
+              </a>
+              <a
+                href="mailto:contact@dsaverse.com"
+                className="p-2.5 bg-brand-bg-primary border border-brand-border/40 text-brand-text-muted hover:text-brand-cyan hover:border-brand-cyan/60 rounded-xl transition-all"
+              >
+                <Mail size={20} />
+              </a>
+            </div>
+          </motion.div>
+        </div>
 
       </div>
     </section>

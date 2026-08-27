@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Eye, Activity, Code, Cpu, Gauge, ClipboardCheck, BarChart4 } from 'lucide-react';
+import { Eye, Activity, Code, Cpu, ClipboardCheck, BarChart4 } from 'lucide-react';
 
 export default function Features() {
   const features = [
@@ -30,13 +30,6 @@ export default function Features() {
       icon: Cpu,
       color: 'text-brand-green group-hover:text-[#34D399]',
       glow: 'shadow-green-glow',
-    },
-    {
-      title: 'Algorithm Speed Control',
-      desc: 'Adjust execution speeds from 0.25x to 3x to thoroughly analyze fast-sorting swaps or slow tree balancing.',
-      icon: Gauge,
-      color: 'text-brand-yellow group-hover:text-[#FBBF24]',
-      glow: 'shadow-yellow-glow',
     },
     {
       title: 'Quiz & Assessment',
