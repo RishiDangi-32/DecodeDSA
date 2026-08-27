@@ -1,0 +1,45 @@
+{
+  "name": "dsa-visualizer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tiptap/extension-code-block-lowlight": "^2.5.8",
+    "@tiptap/extension-image": "^2.5.8",
+    "@tiptap/extension-link": "^2.5.8",
+    "@tiptap/extension-table": "^2.5.8",
+    "@tiptap/extension-table-cell": "^2.5.8",
+    "@tiptap/extension-table-header": "^2.5.8",
+    "@tiptap/extension-table-row": "^2.5.8",
+    "@tiptap/extension-text-align": "^2.5.8",
+    "@tiptap/extension-underline": "^2.5.8",
+    "@tiptap/pm": "^2.5.8",
+    "@tiptap/react": "^2.5.8",
+    "@tiptap/starter-kit": "^2.5.8",
+    "framer-motion": "^11.3.8",
+    "lowlight": "^3.1.0",
+    "lucide-react": "^0.424.0",
+    "mongodb": "^7.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.52.1",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.30.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1"
+  }
+}
