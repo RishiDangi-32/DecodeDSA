@@ -62,7 +62,33 @@ const fallingSymbols = [
   { symbol: '<>', left: '99%', size: '.75rem', duration: 22, delay: 13, color: '#b9e6f7' },
 ];
 
-const loadingSymbols = ['<>', '{}', '[]', '*', '&', '()', '●', '↔', '◇', '→', '↗', '↻', '?', 'O(n)', '∑', '✓'];
+function FallingCodeParticles() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      {fallingSymbols.map((particle, index) => (
+        <motion.span
+          key={`${particle.symbol}-${index}`}
+          className="absolute select-none font-mono font-bold"
+          style={{ left: particle.left, fontSize: particle.size, color: particle.color }}
+          animate={{
+            top: ['-2%', '102%'],
+            x: [0, index % 2 === 0 ? 12 : -12, 0],
+            rotate: [0, index % 2 === 0 ? 18 : -18, 0],
+            opacity: [0, 0.7, 0.7, 0],
+          }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        >
+          {particle.symbol}
+        </motion.span>
+      ))}
+    </div>
+  );
+}
 
 function StartupLoader() {
   const [isLoading, setIsLoading] = useState(true);
@@ -88,17 +114,6 @@ function StartupLoader() {
       role="status"
     >
       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(126, 211, 238, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(126, 211, 238, .12) 1px, transparent 1px)', backgroundSize: '52px 52px' }} />
-      {fallingSymbols.slice(0, 18).map((particle, index) => (
-        <motion.span
-          key={`loader-particle-${index}`}
-          className="absolute top-[-10vh] select-none font-mono font-bold"
-          style={{ left: particle.left, fontSize: particle.size, color: particle.color }}
-          animate={{ y: ['0vh', '120vh'], x: [0, index % 2 ? -18 : 18, 0], rotate: [0, index % 2 ? -25 : 25, 0], opacity: [0, 0.75, 0] }}
-          transition={{ duration: particle.duration * 0.7, delay: particle.delay * 0.12, repeat: Infinity, ease: 'linear' }}
-        >
-          {particle.symbol}
-        </motion.span>
-      ))}
 
       <div className="relative z-10 flex w-full max-w-2xl flex-col items-center px-6 text-center">
         <motion.div
@@ -108,21 +123,8 @@ function StartupLoader() {
         >
           INITIALIZING LEARNING PATH
         </motion.div>
-        <div className="grid max-w-lg grid-cols-4 gap-x-7 gap-y-5 sm:grid-cols-8">
-          {loadingSymbols.map((symbol, index) => (
-            <motion.span
-              key={symbol}
-              initial={{ opacity: 0, y: -28, scale: 0.7 }}
-              animate={{ opacity: [0, 1, 0.5], y: [index % 2 ? -8 : -28, 0, 12], scale: [0.7, 1, 0.86] }}
-              transition={{ duration: 1.5, delay: index * 0.07, repeat: Infinity, repeatDelay: 0.45, ease: 'easeOut' }}
-              className="w-8 font-mono text-lg font-bold text-slate-200 drop-shadow-[0_0_8px_rgba(126,211,238,.8)]"
-            >
-              {symbol}
-            </motion.span>
-          ))}
-        </div>
         <motion.div
-          className="mt-10 h-1 w-48 overflow-hidden rounded-full bg-slate-800"
+          className="mt-4 h-1 w-48 overflow-hidden rounded-full bg-slate-800"
           aria-hidden="true"
         >
           <motion.div className="h-full rounded-full bg-cyan-300" animate={{ x: ['-100%', '200%'] }} transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }} />
@@ -132,58 +134,30 @@ function StartupLoader() {
   );
 }
 
-function FallingCodeParticles() {
-  return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-      {fallingSymbols.map((particle, index) => (
-        <motion.span
-          key={`${particle.symbol}-${index}`}
-          className="absolute top-[-8vh] select-none font-mono font-bold"
-          style={{ left: particle.left, fontSize: particle.size, color: particle.color }}
-          animate={{
-            y: ['0vh', '112vh'],
-            x: [0, index % 2 === 0 ? 12 : -12, 0],
-            rotate: [0, index % 2 === 0 ? 18 : -18, 0],
-            opacity: [0, 0.7, 0.7, 0],
-          }}
-          transition={{
-            duration: particle.duration,
-            delay: particle.delay,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        >
-          {particle.symbol}
-        </motion.span>
-      ))}
-    </div>
-  );
-}
-
 function LandingPage() {
   return (
     <>
       <StartupLoader />
-      <FallingCodeParticles />
       {/* Dynamic Background Blurs */}
       <div className="absolute top-[10%] left-[5%] w-[300px] h-[300px] bg-brand-cyan/5 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute top-[30%] right-[10%] w-[350px] h-[350px] bg-brand-purple/5 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[20%] left-[15%] w-[400px] h-[400px] bg-brand-blue/5 rounded-full blur-[150px] pointer-events-none"></div>
 
-      {/* Floating particles background mock using animated divs */}
-      <div className="absolute top-24 left-[20%] h-1.5 w-1.5 bg-brand-cyan rounded-full animate-ping opacity-30 pointer-events-none"></div>
-      <div className="absolute top-[50%] right-[25%] h-2 w-2 bg-brand-purple rounded-full animate-bounce opacity-25 pointer-events-none"></div>
-      <div className="absolute bottom-40 left-[8%] h-1 w-1 bg-brand-green rounded-full animate-pulse opacity-40 pointer-events-none"></div>
-
       {/* Main Layout Elements */}
       <Navbar />
       <Hero />
       <Workflow />
-      <Features />
-      <Stats />
-      <Roadmap />
-      <Developer />
+
+      {/* Scoped dropping symbols section: starts at Core Functionalities (Features) and ends at Syllabus Roadmap (Roadmap) */}
+      <div className="relative overflow-hidden">
+        <FallingCodeParticles />
+        <Features />
+        <Stats />
+        <Roadmap />
+      </div>
+
       <CTA />
+      <Developer />
       <Footer />
     </>
   );
