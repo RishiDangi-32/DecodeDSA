@@ -46,6 +46,7 @@ export interface Media {
   filename: string;
   size: number;
   mimeType: string;
+  folder?: string;
   createdAt: string;
   updatedAt: string;
 }

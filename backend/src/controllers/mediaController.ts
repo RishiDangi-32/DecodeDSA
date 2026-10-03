@@ -7,10 +7,16 @@ export const getMedia = async (req: Request, res: Response, next: NextFunction) 
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 12;
+    const folder = req.query.folder as string;
     const skip = (page - 1) * limit;
 
-    const total = await Media.countDocuments({});
-    const media = await Media.find({})
+    const query: any = {};
+    if (folder && folder !== 'all') {
+      query.folder = folder;
+    }
+
+    const total = await Media.countDocuments(query);
+    const media = await Media.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -38,17 +44,21 @@ export const uploadMedia = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
+    // Determine target folder to prevent merging images across different courses
+    const targetFolder = (req.body.folder || req.query.folder || 'general').trim().replace(/[^a-zA-Z0-9_-]/g, '-');
+    const cloudinaryFolder = `dsaverse/${targetFolder}`;
+
     // Upload stream to Cloudinary
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder: 'dsaverse',
+        folder: cloudinaryFolder,
         resource_type: 'auto'
       },
       async (error, result) => {
         if (error || !result) {
           return res.status(500).json({
             success: false,
-            message: 'Image upload to Cloudinary failed.',
+            message: 'Image upload to Cloudinary failed. Please check your Cloudinary credentials in .env.',
             error
           });
         }
@@ -58,7 +68,8 @@ export const uploadMedia = async (req: Request, res: Response, next: NextFunctio
           publicId: result.public_id,
           filename: req.file!.originalname,
           size: req.file!.size,
-          mimeType: req.file!.mimetype
+          mimeType: req.file!.mimetype,
+          folder: targetFolder
         });
 
         await media.save();

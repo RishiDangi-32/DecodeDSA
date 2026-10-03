@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { 
   Upload, X, Link as LinkIcon, Trash2, RefreshCw, 
-  ChevronLeft, ChevronRight, FileImage, Image as ImageIcon, Copy
+  ChevronLeft, ChevronRight, FileImage, Image as ImageIcon, Copy,
+  Folder
 } from 'lucide-react';
 import { api } from '../../services/api';
-import { Media } from '../../types';
+import { Media, Course } from '../../types';
 import toast from 'react-hot-toast';
 
 export default function MediaLibraryPage() {
   const [mediaList, setMediaList] = useState<Media[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -17,10 +20,17 @@ export default function MediaLibraryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Fetch courses for folder dropdown
+  useEffect(() => {
+    api.getCourses({ limit: 100 })
+      .then(res => setCourses(res.courses))
+      .catch(() => {});
+  }, []);
+
   const fetchMedia = async () => {
     setLoading(true);
     try {
-      const res = await api.getMedia(page, 12);
+      const res = await api.getMedia(page, 12, selectedFolder === 'all' ? undefined : selectedFolder);
       setMediaList(res.media);
       setTotalPages(res.pagination.pages);
       setTotalItems(res.pagination.total);
@@ -33,7 +43,7 @@ export default function MediaLibraryPage() {
 
   useEffect(() => {
     fetchMedia();
-  }, [page]);
+  }, [page, selectedFolder]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -45,10 +55,12 @@ export default function MediaLibraryPage() {
         return;
       }
 
+      const targetFolder = selectedFolder !== 'all' ? selectedFolder : (courses[0]?.slug || 'general');
+
       setIsUploading(true);
-      const toastId = toast.loading('Uploading asset to Cloudinary...');
+      const toastId = toast.loading(`Uploading to folder "${targetFolder}" on Cloudinary...`);
       try {
-        await api.uploadMedia(file);
+        await api.uploadMedia(file, targetFolder);
         toast.success('Asset uploaded successfully!', { id: toastId });
         setPage(1);
         fetchMedia();
@@ -119,6 +131,27 @@ export default function MediaLibraryPage() {
         </label>
       </div>
 
+      {/* Course / Folder Filter Bar */}
+      <div className="flex items-center gap-3 bg-[#0D2538]/40 border border-brand-border/10 p-3 rounded-2xl max-w-md">
+        <Folder className="text-brand-cyan flex-shrink-0" size={18} />
+        <label className="text-xs font-bold text-brand-text-muted whitespace-nowrap">Filter by Course:</label>
+        <select
+          value={selectedFolder}
+          onChange={(e) => {
+            setSelectedFolder(e.target.value);
+            setPage(1);
+          }}
+          className="flex-1 bg-[#071A26]/90 border border-brand-border/20 text-brand-text-white text-xs font-semibold py-1.5 px-3 rounded-xl focus:outline-none focus:border-brand-cyan"
+        >
+          <option value="all">All Courses & Folders</option>
+          {courses.map(c => (
+            <option key={c._id} value={c.slug}>
+              Course: {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Grid view of media assets */}
       {loading ? (
         <div className="min-h-[40vh] flex flex-col items-center justify-center space-y-3">
@@ -131,7 +164,7 @@ export default function MediaLibraryPage() {
             {mediaList.map((media) => (
               <div 
                 key={media._id}
-                className="group relative border border-brand-border/10 rounded-2xl bg-[#0D2538]/20 overflow-hidden shadow-md flex flex-col hover:border-brand-cyan/20 transition-all duration-300 h-56"
+                className="group relative border border-brand-border/10 rounded-2xl bg-[#0D2538]/20 overflow-hidden shadow-md flex flex-col hover:border-brand-cyan/20 transition-all duration-300 h-60"
               >
                 {/* Image Frame */}
                 <div className="flex-1 bg-[#071A26]/50 overflow-hidden relative">
@@ -161,10 +194,15 @@ export default function MediaLibraryPage() {
                 </div>
 
                 {/* Footer details inside card */}
-                <div className="p-3 bg-[#0D2538]/70 border-t border-brand-border/10 space-y-0.5">
-                  <p className="text-[11px] font-bold text-brand-text-white truncate" title={media.filename}>
-                    {media.filename}
-                  </p>
+                <div className="p-3 bg-[#0D2538]/70 border-t border-brand-border/10 space-y-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-[11px] font-bold text-brand-text-white truncate flex-1" title={media.filename}>
+                      {media.filename}
+                    </p>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20 font-mono truncate max-w-[90px]" title={media.folder || 'general'}>
+                      {media.folder || 'general'}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center text-[9px] text-brand-text-muted font-bold">
                     <span>{formatBytes(media.size)}</span>
                     <span className="uppercase">{media.mimeType.split('/')[1]}</span>

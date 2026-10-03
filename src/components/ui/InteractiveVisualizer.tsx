@@ -496,9 +496,8 @@ export default function InteractiveVisualizer() {
               className="flex flex-col items-center flex-1 max-w-[45px]"
             >
               <div 
-                className={`w-full rounded-t-lg border transition-all duration-300 flex items-end justify-center pb-2 text-[9px] sm:text-xs font-black text-brand-text-white shadow-inner`}
                 style={{ height: `${val * 1.5}px` }}
-                className={getBarClass(idx)}
+                className={`w-full rounded-t-lg border transition-all duration-300 flex items-end justify-center pb-2 text-[9px] sm:text-xs font-black text-brand-text-white shadow-inner ${getBarClass(idx)}`}
               >
                 <span className="opacity-90">{val}</span>
               </div>

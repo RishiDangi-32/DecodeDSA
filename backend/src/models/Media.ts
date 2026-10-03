@@ -6,6 +6,7 @@ export interface IMedia extends Document {
   filename: string;
   size: number;
   mimeType: string;
+  folder?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,7 +17,8 @@ const MediaSchema = new Schema<IMedia>(
     publicId: { type: String, required: true, unique: true },
     filename: { type: String, required: true },
     size: { type: Number, required: true },
-    mimeType: { type: String, required: true }
+    mimeType: { type: String, required: true },
+    folder: { type: String, default: 'general' }
   },
   { timestamps: true }
 );

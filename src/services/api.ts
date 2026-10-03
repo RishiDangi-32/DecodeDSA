@@ -103,10 +103,11 @@ export const api = {
   deleteLesson: (id: string) => request<any>(`/lessons/${id}`, { method: 'DELETE' }),
 
   // Media Library
-  getMedia: (page?: number, limit?: number) => {
+  getMedia: (page?: number, limit?: number, folder?: string) => {
     const query = new URLSearchParams();
     if (page) query.append('page', String(page));
     if (limit) query.append('limit', String(limit));
+    if (folder) query.append('folder', folder);
     return fetch(`${API_BASE_URL}/media?${query.toString()}`)
       .then(res => res.json())
       .then(res => {
@@ -117,9 +118,10 @@ export const api = {
         };
       });
   },
-  uploadMedia: (file: File) => {
+  uploadMedia: (file: File, folder?: string) => {
     const formData = new FormData();
     formData.append('image', file);
+    if (folder) formData.append('folder', folder);
     return fetch(`${API_BASE_URL}/media/upload`, {
       method: 'POST',
       body: formData,

@@ -7,9 +7,10 @@ interface ImageUploadProps {
   value?: string; // Cloudinary URL
   onChange: (url: string) => void;
   label?: string;
+  folder?: string;
 }
 
-export default function ImageUpload({ value, onChange, label = 'Featured Image' }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, label = 'Featured Image', folder }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +34,7 @@ export default function ImageUpload({ value, onChange, label = 'Featured Image' 
     const toastId = toast.loading('Uploading image to Cloudinary...');
 
     try {
-      const data = await api.uploadMedia(file);
+      const data = await api.uploadMedia(file, folder);
       onChange(data.url);
       toast.success('Image uploaded successfully!', { id: toastId });
     } catch (error: any) {

@@ -10,14 +10,16 @@ import TableCell from '@tiptap/extension-table-cell';
 import TextAlign from '@tiptap/extension-text-align';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { 
   Bold, Italic, Underline as UnderlineIcon, 
   List, ListOrdered, Code, Quote, Plus, 
   Undo, Redo, Heading1, Heading2, Heading3, 
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Link as LinkIcon, Image as ImageIcon, Grid3X3, Minus
+  Link as LinkIcon, Image as ImageIcon, Grid3X3, Minus,
+  Upload, RefreshCw
 } from 'lucide-react';
+import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const lowlight = createLowlight(common);
@@ -25,9 +27,12 @@ const lowlight = createLowlight(common);
 interface RichTextEditorProps {
   value?: any; // JSON representation
   onChange: (value: any) => void;
+  folder?: string;
 }
 
-export default function RichTextEditor({ value, onChange }: RichTextEditorProps) {
+export default function RichTextEditor({ value, onChange, folder }: RichTextEditorProps) {
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -109,6 +114,34 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
     const url = window.prompt('Enter Image URL');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Only image formats (PNG, JPG, WEBP, GIF) are allowed.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size exceeds the 5MB limit.');
+        return;
+      }
+
+      setIsUploadingImage(true);
+      const toastId = toast.loading('Uploading image to Cloudinary...');
+      try {
+        const data = await api.uploadMedia(file, folder);
+        editor.chain().focus().setImage({ src: data.url }).run();
+        toast.success('Image inserted below cursor!', { id: toastId });
+      } catch (err: any) {
+        toast.error(err.message || 'Image upload failed.', { id: toastId });
+      } finally {
+        setIsUploadingImage(false);
+        if (imageInputRef.current) imageInputRef.current.value = '';
+      }
     }
   };
 
@@ -283,10 +316,27 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
           type="button"
           onClick={addImage}
           className={btnClass(false)}
-          title="Add Image URL"
+          title="Insert Image by URL"
         >
           <ImageIcon size={16} />
         </button>
+        <button
+          type="button"
+          onClick={() => imageInputRef.current?.click()}
+          className={btnClass(false)}
+          title="Upload & Insert Image from Computer"
+          disabled={isUploadingImage}
+        >
+          {isUploadingImage ? <RefreshCw size={16} className="animate-spin text-brand-cyan" /> : <Upload size={16} />}
+        </button>
+        <input 
+          type="file" 
+          ref={imageInputRef} 
+          onChange={handleImageFileChange} 
+          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+          className="hidden" 
+          disabled={isUploadingImage} 
+        />
         <button
           type="button"
           onClick={insertTable}

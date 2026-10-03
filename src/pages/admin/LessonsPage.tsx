@@ -295,13 +295,21 @@ export default function LessonsPage() {
                 <label className="text-xs font-bold text-brand-text-muted uppercase tracking-wider">
                   Lesson Rich Content *
                 </label>
-                <RichTextEditor value={content} onChange={setContent} />
+                <RichTextEditor 
+                  value={content} 
+                  onChange={setContent} 
+                  folder={courses.find(c => c._id === selectedCourseId)?.slug || 'general'} 
+                />
               </div>
             </div>
 
             {/* Right featured image column */}
             <div className="space-y-5">
-              <ImageUpload value={featuredImage} onChange={setFeaturedImage} />
+              <ImageUpload 
+                value={featuredImage} 
+                onChange={setFeaturedImage} 
+                folder={courses.find(c => c._id === selectedCourseId)?.slug || 'general'} 
+              />
 
               <div className="glass p-5 rounded-2xl border border-brand-border/15 space-y-4">
                 <h3 className="font-bold text-brand-text-white text-sm">Status & Publication</h3>
