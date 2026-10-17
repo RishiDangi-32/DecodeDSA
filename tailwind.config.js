@@ -26,7 +26,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ["Poppins", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "Poppins", "sans-serif"],
+        serif: ["Playfair Display", "Georgia", "serif"],
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       boxShadow: {
