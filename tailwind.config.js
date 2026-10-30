@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      spacing: {
+        18: '4.5rem',
+      },
       colors: {
         brand: {
           bg: {
@@ -27,7 +30,7 @@ export default {
       },
       fontFamily: {
         sans: ["Plus Jakarta Sans", "Poppins", "sans-serif"],
-        serif: ["Playfair Display", "Georgia", "serif"],
+        serif: ["Newsreader", "Lora", "Playfair Display", "Georgia", "serif"],
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       boxShadow: {

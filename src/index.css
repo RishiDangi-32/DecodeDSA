@@ -48,19 +48,39 @@
     background-position: center;
   }
 
-  /* Custom scrollbar for modern premium feel */
+  /* Custom scrollbar matching soothing and clean theme */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #071A26;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 229, 255, 0.2);
-    border-radius: 4px;
+    background: rgba(140, 160, 175, 0.35);
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 229, 255, 0.4);
+    background: rgba(140, 160, 175, 0.6);
+  }
+
+  /* Specific soothing workspace scrollbar */
+  .soothing-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .soothing-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .soothing-scrollbar::-webkit-scrollbar-thumb {
+    background: #C8D5E0;
+    border-radius: 9999px;
+  }
+  .soothing-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9FB5C6;
+  }
+  .soothing-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #C8D5E0 transparent;
   }
 
   /* Utility to hide scrollbars completely */
@@ -88,4 +108,79 @@
 .radial-glow {
   filter: blur(100px);
   animation: pulseGlow 8s ease-in-out infinite;
+}
+
+/* Tiptap / ProseMirror Editor Content Styles */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.75rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.ProseMirror ul {
+  list-style-type: disc !important;
+  padding-left: 1.75rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.ProseMirror li {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.ProseMirror li p {
+  margin: 0 !important;
+  display: inline;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid rgba(0, 229, 255, 0.8) !important;
+  background: rgba(0, 229, 255, 0.05) !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0 0.75rem 0.75rem 0 !important;
+  margin: 1rem 0 !important;
+  font-style: italic !important;
+}
+
+/* Highlighted Note / Callout Box in Editor */
+.ProseMirror div[data-type="highlighted-note"],
+.highlighted-note-block {
+  border-left: 4px solid #F59E0B !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+  border-right: 1px solid rgba(245, 158, 11, 0.25) !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25) !important;
+  border-radius: 1rem !important;
+  padding: 1rem 1.25rem !important;
+  margin: 1.25rem 0 !important;
+  color: #FEF3C7 !important;
+  position: relative !important;
+}
+
+.ProseMirror div[data-type="highlighted-note"]::before {
+  content: "💡 NOTE" !important;
+  display: inline-block !important;
+  font-size: 0.65rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  background: rgba(245, 158, 11, 0.25) !important;
+  color: #FDE68A !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  padding: 0.15rem 0.6rem !important;
+  border-radius: 9999px !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.ProseMirror div[data-type="highlighted-note"] p {
+  color: #FEF3C7 !important;
+  font-weight: 500 !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
 }

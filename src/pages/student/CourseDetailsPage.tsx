@@ -1,15 +1,16 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, BookOpen, RefreshCw, Milestone, 
   ArrowRight, AlertTriangle, CheckCircle2, 
   Circle, ChevronDown, GraduationCap,
-  Trophy, Check, Play
+  Trophy, Check, Play, Search, X
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Course, Module, Lesson } from '../../types';
-import projectLogo from '../../assets/images/Project_logo.png';
+import mitsLogo from '../../assets/images/mits_logo.png';
+import rishiAvatar from '../../assets/images/Rishi.png';
 
 // Theme configuration per track to ensure 100% visual continuity with Explore page
 interface CourseTheme {
@@ -72,11 +73,25 @@ export default function CourseDetailsPage() {
   const [modules, setModules] = useState<Module[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Track open/collapsed module state (first module open by default)
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     '0': true
   });
+
+  // Global Ctrl/Cmd + K shortcut for quick search focus
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const toggleModule = (idOrIndex: string) => {
     setExpandedModules(prev => ({
@@ -137,10 +152,35 @@ export default function CourseDetailsPage() {
     });
   }, [modules, lessons]);
 
+  // Filter roadmap modules & lessons in real-time when searching
+  const filteredRoadmapModules = useMemo(() => {
+    if (!search.trim()) return roadmapModules;
+    const q = search.toLowerCase();
+    return roadmapModules
+      .map(mod => {
+        const titleMatch = mod.title.toLowerCase().includes(q);
+        const descMatch = mod.description.toLowerCase().includes(q);
+        const matchedTopics = mod.topics.filter(t => 
+          t.title.toLowerCase().includes(q) || (t.slug && t.slug.toLowerCase().includes(q))
+        );
+        if (titleMatch || descMatch) {
+          return mod;
+        }
+        if (matchedTopics.length > 0) {
+          return {
+            ...mod,
+            topics: matchedTopics
+          };
+        }
+        return null;
+      })
+      .filter((mod): mod is NonNullable<typeof mod> => mod !== null);
+  }, [roadmapModules, search]);
+
 
   const totalTopics = lessons.length;
   const courseDisplayName = course?.name || theme.trackName;
-  const courseDisplayDesc = course?.description || 'Learn core concepts and hands-on exercises.';
+  const courseDisplayDesc = course?.description || 'Learn the core concepts of C++ programming, including syntax, variables, data types, operators, control flow, functions, arrays, pointers, and object-oriented programming. Build a strong foundation for solving programming and DSA problems.';
 
   // Find the very first lesson to start/resume
   const firstLesson = useMemo(() => {
@@ -154,9 +194,9 @@ export default function CourseDetailsPage() {
   }, [roadmapModules, lessons]);
 
   // Handle clicking a lesson/topic
-  const handleTopicClick = (lessonSlug: string) => {
-    if (!courseSlug || !lessonSlug) return;
-    navigate(`/student/courses/${courseSlug}/lessons/${lessonSlug}`);
+  const handleTopicClick = (lessonIdentifier: string) => {
+    if (!courseSlug || !lessonIdentifier) return;
+    navigate(`/student/courses/${courseSlug}/lessons/${lessonIdentifier}`);
   };
 
   if (loading) {
@@ -170,10 +210,10 @@ export default function CourseDetailsPage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center select-none">
+      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center select-none font-sans">
         <AlertTriangle className="text-amber-500 mb-4" size={48} />
-        <h2 className="text-2xl font-bold font-serif text-[#0B1B2B]">Course Not Found</h2>
-        <p className="text-sm text-slate-600 mt-2 max-w-sm">The course you are looking for does not exist or has not been created in MongoDB Atlas yet.</p>
+        <h2 className="text-2xl font-bold font-sans text-[#0B1B2B]">Course Not Found</h2>
+        <p className="text-sm text-[#334155] font-medium mt-2 max-w-sm">The course you are looking for does not exist or has not been created in MongoDB Atlas yet.</p>
         <button
           onClick={() => navigate('/student/courses')}
           className="mt-6 px-6 py-2.5 bg-black text-white font-bold text-xs rounded-xl shadow-xs hover:bg-slate-800 transition-colors"
@@ -185,7 +225,7 @@ export default function CourseDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-[#0F172A] relative selection:bg-[#0284C7]/20 selection:text-[#0B1B2B] flex flex-col justify-between">
+    <div className="min-h-screen bg-[#FFFDF9] text-[#0F172A] font-sans relative selection:bg-[#0284C7]/20 selection:text-[#0B1B2B] flex flex-col justify-between">
       
       {/* Subtle warm background textures & grid pattern matching Explore page */}
       <div 
@@ -205,34 +245,118 @@ export default function CourseDetailsPage() {
       <div className="fixed top-16 right-1/3 w-80 h-80 bg-sky-50/50 rounded-full blur-3xl pointer-events-none z-0" />
 
       {/* ========================================================
-          1. TOP NAVIGATION HEADER (Compact, elegant, with black border)
+          1. TOP NAVIGATION HEADER (Application / Dashboard Style)
          ======================================================== */}
-      <header className="sticky top-0 z-40 w-full h-16 sm:h-[70px] bg-[#EEF2F6]/95 backdrop-blur-md border-b border-black flex-shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-        <div className="max-w-[1320px] mx-auto px-4 sm:px-8 lg:px-10 h-full flex items-center justify-between relative z-10">
+      <header className="sticky top-0 z-40 w-full h-16 sm:h-[70px] bg-[#EEF2F6]/95 backdrop-blur-md border-b border-[#E2E8F0] flex-shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.03)] font-sans">
+        <div className="max-w-[1320px] mx-auto px-4 sm:px-8 lg:px-10 h-full flex items-center justify-between gap-3 sm:gap-6 relative z-10">
           
-          {/* Left: Back to Courses List Button */}
-          <button
-            onClick={() => navigate('/student/courses')}
-            className="group inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white hover:bg-slate-50 text-slate-800 hover:text-black text-xs sm:text-sm font-bold rounded-xl border border-black shadow-xs hover:shadow transition-all duration-200 active:scale-95"
-          >
-            <ChevronLeft size={16} className="text-slate-700 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Courses List</span>
-          </button>
+          {/* Left: Brand + Navigation Links */}
+          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+            {/* DecodeDSA Logo & Brand */}
+            <a href="/student/courses" className="flex items-center gap-2.5 select-none group">
+              <div className="h-12 w-15 sm:h-13 sm:w-16 bg-white rounded-xl flex items-center justify-center p-0.5 shadow-xs border border-slate-200/80 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
+                <img 
+                  src={mitsLogo} 
+                  alt="MITS Logo" 
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="flex items-center tracking-tight font-black text-lg sm:text-xl">
+                <span className="text-[#0B1B2B]">Decode</span>
+                <span className="text-[#0284C7] ml-0.5">DSA</span>
+              </div>
+            </a>
 
-          {/* Right: DecodeDSA Logo & Brand */}
-          <a href="/student/courses" className="flex items-center gap-2.5 select-none">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full overflow-hidden bg-white shadow-xs border border-slate-200 flex items-center justify-center p-0.5">
+            {/* Subtle Vertical Divider */}
+            <span className="h-5 w-px bg-slate-300 hidden md:block" />
+
+            {/* Nav Links: Courses · Progress · Practice */}
+            <nav className="hidden md:flex items-center gap-2 text-xs sm:text-sm font-semibold select-none">
+              <button
+                type="button"
+                onClick={() => navigate('/student/courses')}
+                className="text-[#0B1B2B] font-bold hover:text-[#0284C7] transition-colors py-1 px-1.5 cursor-pointer"
+              >
+                Courses
+              </button>
+              <span className="text-slate-400 font-bold">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('learning-path-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-slate-600 hover:text-[#0B1B2B] transition-colors py-1 px-1.5 cursor-pointer"
+              >
+                Progress
+              </button>
+              <span className="text-slate-400 font-bold">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (firstLesson) handleTopicClick(firstLesson._id);
+                }}
+                className="text-slate-600 hover:text-[#0B1B2B] transition-colors py-1 px-1.5 cursor-pointer"
+              >
+                Practice
+              </button>
+            </nav>
+          </div>
+
+          {/* Right: ⌘ K Search & Profile Avatar */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* ⌘ K Search Input */}
+            <div className="relative w-36 sm:w-52 md:w-60 lg:w-64 bg-white border border-[#CBD5E1] hover:border-slate-400 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/50 rounded-xl px-2.5 sm:px-3 py-1.5 shadow-2xs transition-all flex items-center gap-2">
+              <Search size={14} className="text-slate-400 focus-within:text-black shrink-0 transition-colors" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search topics..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="bg-transparent border-none text-xs text-slate-800 placeholder-slate-400 focus:outline-none flex-1 font-medium min-w-0"
+              />
+              <div className="flex items-center gap-1 shrink-0">
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('');
+                      searchInputRef.current?.focus();
+                    }}
+                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                  >
+                    <X size={12} />
+                  </button>
+                ) : (
+                  <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 rounded-md select-none pointer-events-none">
+                    ⌘ K
+                  </kbd>
+                )}
+              </div>
+            </div>
+
+            {/* User Profile Circular Avatar */}
+            <div 
+              title="My Profile (Rishi Dangi)"
+              className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-[#CBD5E1] shadow-2xs overflow-hidden flex items-center justify-center bg-white cursor-pointer hover:ring-2 hover:ring-slate-300/60 transition-all select-none group shrink-0"
+            >
               <img 
-                src={projectLogo} 
-                alt="DecodeDSA Logo" 
-                className="h-full w-full object-cover rounded-full"
+                src={rishiAvatar} 
+                alt="My Profile" 
+                className="h-full w-full object-cover rounded-full group-hover:scale-105 transition-transform duration-200"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerText = 'RD';
+                    parent.className = 'relative h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-[#CBD5E1] shadow-2xs flex items-center justify-center bg-white font-bold text-xs text-[#0B1B2B] select-none';
+                  }
+                }}
               />
             </div>
-            <div className="flex items-center tracking-tight font-black text-xl">
-              <span className="text-[#0B1B2B]">Decode</span>
-              <span className="text-[#0284C7] ml-0.5">DSA</span>
-            </div>
-          </a>
+          </div>
 
         </div>
       </header>
@@ -240,69 +364,51 @@ export default function CourseDetailsPage() {
       {/* ========================================================
           2. MAIN CONTENT WRAPPER
          ======================================================== */}
-      <main className="relative z-10 max-w-[1320px] mx-auto px-4 sm:px-8 lg:px-10 w-full flex-1 py-6 sm:py-10 space-y-8 sm:space-y-12">
+      <main className="relative z-10 max-w-[1320px] mx-auto px-4 sm:px-8 lg:px-10 w-full flex-1 py-6 sm:py-8 space-y-6 sm:space-y-8">
         
-        {/* ========================================================
-            COURSE HERO SECTION
-           ======================================================== */}
-        <section className="space-y-3 sm:space-y-4">
-
-          {/* Large Course Title */}
-          <motion.h1 
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="text-3xl sm:text-4xl lg:text-[46px] font-serif font-bold text-[#0B1B2B] tracking-tight leading-[1.1]"
-          >
-            {courseDisplayName}
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p 
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
-            className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-3xl"
-          >
-            {courseDisplayDesc}
-          </motion.p>
-        </section>
-
-
         {/* ========================================================
             ROADMAP & SIDEBAR PROGRESS SECTION
            ======================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
-          {/* LEFT 8/12: THE VERTICAL SYLLABUS ROADMAP */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* LEFT 8/12: HERO & THE VERTICAL SYLLABUS ROADMAP */}
+          <div className="lg:col-span-8 space-y-5 sm:space-y-6">
             
-            {/* Section Header */}
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 pb-2 border-b border-slate-200">
-              <div>
-                <h2 className="text-2xl sm:text-[28px] font-serif font-bold text-[#0B1B2B] tracking-tight">
-                  Your Learning Path
-                </h2>
-                <p className="text-xs sm:text-[13px] text-slate-600 font-normal mt-0.5">
-                  Follow the modules in order or jump directly to any topic below.
-                </p>
-              </div>
-              <div className="text-xs font-bold text-slate-500 whitespace-nowrap self-start sm:self-auto">
-                <span className="text-[#0B1B2B] font-extrabold">{modules.length}</span> Modules •{' '}
-                <span className="text-[#0B1B2B] font-extrabold">{totalTopics}</span> Topics
-              </div>
-            </div>
+            {/* COURSE HERO SECTION */}
+            <section className="space-y-2">
+              {/* Large Course Title */}
+              <motion.h1 
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="text-3xl sm:text-4xl lg:text-[40px] font-sans font-extrabold text-[#0B1B2B] tracking-[-0.025em] leading-[1.12]"
+              >
+                {courseDisplayName}
+              </motion.h1>
+
+              {/* Subtitle */}
+              <motion.p 
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                className="text-sm sm:text-[15px] text-[#334155] font-medium leading-relaxed text-justify w-full"
+                style={{ textAlign: 'justify', textJustify: 'inter-word' }}
+              >
+                {courseDisplayDesc}
+              </motion.p>
+            </section>
 
             {/* Vertical Timeline Container */}
-            {roadmapModules.length > 0 ? (
-              <div className="relative pl-6 sm:pl-10 space-y-6 sm:space-y-8">
+            {filteredRoadmapModules.length > 0 ? (
+              <div id="learning-path-section" className="relative pl-6 sm:pl-9 space-y-4 sm:space-y-5 scroll-mt-24">
                 
                 {/* Continuous vertical timeline guideline running down the left */}
-                <div className="absolute left-[17px] sm:left-[21px] top-6 bottom-8 w-[2px] bg-slate-300 rounded-full" />
+                <div className="absolute left-[13px] sm:left-[17px] top-5 bottom-5 w-[2px] bg-slate-200/90 rounded-full" />
 
                 {/* Module Cards attached to the timeline */}
-                {roadmapModules.map((mod, index) => {
-                  const isOpen = !!expandedModules[String(index)];
+                {filteredRoadmapModules.map((mod, index) => {
+                  const isOpen = !!expandedModules[String(index)] || Boolean(search.trim());
+                  const isCurrent = index === 0;
 
                   return (
                     <div key={mod.id} className="relative group">
@@ -310,18 +416,25 @@ export default function CourseDetailsPage() {
                       {/* Numbered Circular Node on the Timeline */}
                       <div 
                         onClick={() => toggleModule(String(index))}
-                        className="absolute -left-[24px] sm:-left-[32px] top-5 w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-black bg-white flex items-center justify-center font-black text-xs sm:text-sm shadow-xs transition-transform duration-200 group-hover:scale-110 cursor-pointer z-10 select-none"
-                        style={{ color: theme.primary }}
+                        className={`absolute -left-[24px] sm:-left-[32px] top-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-2xs transition-transform duration-200 group-hover:scale-105 cursor-pointer z-10 select-none ${
+                          isCurrent
+                            ? 'border-2 border-emerald-500 bg-white text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                            : 'border border-slate-300 bg-white text-slate-500'
+                        }`}
                       >
                         {mod.number}
                       </div>
 
                       {/* Main Module Card */}
                       <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, delay: index * 0.05 }}
-                        className="bg-white border-2 border-black rounded-2xl p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.09)] transition-all duration-200"
+                        transition={{ duration: 0.3, delay: index * 0.04 }}
+                        className={`bg-white rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs transition-all duration-200 ${
+                          isCurrent
+                            ? 'border border-emerald-300 ring-1 ring-emerald-200/50'
+                            : 'border border-[#E2E8F0] hover:border-slate-300'
+                        }`}
                       >
                         
                         {/* Top Header Row of Card: Module Number + Title + Topics Count + Toggle */}
@@ -334,12 +447,13 @@ export default function CourseDetailsPage() {
                             {/* Module Number Label */}
                             <div className="flex items-center gap-2">
                               <span 
-                                className="text-[11px] font-black uppercase tracking-wider"
-                                style={{ color: theme.primary }}
+                                className={`text-[11px] font-black uppercase tracking-wider ${
+                                  isCurrent ? 'text-emerald-600' : 'text-slate-400'
+                                }`}
                               >
                                 MODULE {mod.number}
                               </span>
-                              {index === 0 && (
+                              {isCurrent && (
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
                                   Current
                                 </span>
@@ -347,7 +461,7 @@ export default function CourseDetailsPage() {
                             </div>
 
                             {/* Module Title */}
-                            <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#0B1B2B] tracking-tight leading-snug group-hover:text-black">
+                            <h3 className="text-lg sm:text-xl font-sans font-bold text-[#0B1B2B] tracking-[-0.015em] leading-snug group-hover:text-black">
                               {mod.title}
                             </h3>
                           </div>
@@ -372,7 +486,7 @@ export default function CourseDetailsPage() {
 
                         {/* Module Description */}
                         {mod.description && (
-                          <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-normal mt-2.5">
+                          <p className="text-xs sm:text-[13px] text-[#334155] leading-relaxed font-medium mt-2.5">
                             {mod.description}
                           </p>
                         )}
@@ -385,7 +499,7 @@ export default function CourseDetailsPage() {
                                 key={top._id}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleTopicClick(top.slug);
+                                  handleTopicClick(top._id);
                                 }}
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium cursor-pointer transition-colors"
                               >
@@ -423,8 +537,8 @@ export default function CourseDetailsPage() {
                                 mod.topics.map((topic, tIdx) => (
                                   <div
                                     key={topic._id}
-                                    onClick={() => handleTopicClick(topic.slug)}
-                                    className={`group/topic p-3 rounded-xl border border-slate-200 hover:border-black bg-white hover:bg-slate-50/80 transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer ${theme.chipHover}`}
+                                    onClick={() => handleTopicClick(topic._id)}
+                                    className={`group/topic p-3 rounded-xl border border-slate-200 hover:border-slate-400 bg-white hover:bg-slate-50/80 transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer ${theme.chipHover}`}
                                   >
                                     
                                     {/* Left: Status Icon + Topic Number + Title */}
@@ -478,17 +592,35 @@ export default function CourseDetailsPage() {
                 })}
 
               </div>
+            ) : search.trim() ? (
+              /* Search Empty State */
+              <div className="p-8 sm:p-12 bg-white border border-slate-200 rounded-2xl text-center space-y-3 shadow-xs">
+                <Search size={32} className="text-slate-400 mx-auto" />
+                <h3 className="text-lg font-sans font-bold text-[#0B1B2B]">
+                  No topics matching "{search}"
+                </h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Try searching with different keywords or clear the search filter.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  Clear Search
+                </button>
+              </div>
             ) : (
               /* Clean empty state when MongoDB Atlas has no modules for this course yet */
-              <div className="p-8 sm:p-12 bg-white border-2 border-black rounded-2xl text-center space-y-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+              <div className="p-8 sm:p-12 bg-white border border-[#E2E8F0] rounded-2xl text-center space-y-4 shadow-2xs">
                 <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-300 flex items-center justify-center mx-auto text-slate-500">
                   <Milestone size={28} />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-xl font-serif font-bold text-[#0B1B2B]">
+                  <h3 className="text-xl font-sans font-bold text-[#0B1B2B]">
                     Syllabus Modules Coming Soon
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#334155] font-medium max-w-md mx-auto leading-relaxed">
                     No modules are stored in MongoDB Atlas for this course yet. Once you frame the curriculum and save the modules, they will appear here automatically.
                   </p>
                 </div>
@@ -505,88 +637,44 @@ export default function CourseDetailsPage() {
           </div>
 
           {/* RIGHT 4/12: TABULAR COURSE OVERVIEW & DETAILS (Desktop) */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
+          <div className="lg:col-span-4 lg:sticky lg:top-[86px] space-y-4">
             
-            {/* Overview Card with Tabular Metadata */}
-            <div className="bg-white border-2 border-black rounded-2xl p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] space-y-5">
+            {/* Overview Card with Clean Modern Metadata (1px subtle border) */}
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs space-y-3.5">
               
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-black/10 pb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-[#0B1B2B]">
+              {/* Header (badge, line, and dot removed) */}
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-black">
                   Course Overview
                 </span>
-                <span 
-                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border"
-                  style={{ 
-                    backgroundColor: theme.lightBg, 
-                    color: theme.primary,
-                    borderColor: theme.borderAccent 
-                  }}
-                >
-                  {theme.courseNumber.split(' ')[0]} Track
-                </span>
               </div>
 
-              {/* Tabular Details: Count of modules, Topics, Duration, Level */}
-              <div className="overflow-hidden rounded-xl border border-black/15 bg-white">
-                <table className="w-full text-left border-collapse text-xs">
-                  <tbody>
-                    <tr className="border-b border-black/10 hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-3.5 font-bold text-slate-500 bg-slate-50/60 w-2/5">
-                        Modules
-                      </td>
-                      <td className="py-3 px-3.5 font-extrabold text-[#0B1B2B]">
-                        <span style={{ color: theme.primary }}>{modules.length}</span> Modules
-                      </td>
-                    </tr>
-                    <tr className="border-b border-black/10 hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-3.5 font-bold text-slate-500 bg-slate-50/60">
-                        Topics
-                      </td>
-                      <td className="py-3 px-3.5 font-extrabold text-[#0B1B2B]">
-                        <span style={{ color: theme.primary }}>{totalTopics}</span> Topics
-                      </td>
-                    </tr>
-                    <tr className="border-b border-black/10 hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-3.5 font-bold text-slate-500 bg-slate-50/60">
-                        Duration
-                      </td>
-                      <td className="py-3 px-3.5 font-bold text-[#0B1B2B]">
-                        {theme.duration}
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-3.5 font-bold text-slate-500 bg-slate-50/60">
-                        Level
-                      </td>
-                      <td className="py-3 px-3.5 font-bold text-[#0B1B2B]">
-                        {theme.level}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              {/* Modern Sleek Metadata Rows */}
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]/80 hover:border-slate-300/80 transition-all">
+                  <span className="font-semibold text-[#334155]">Modules</span>
+                  <span className="font-bold text-black">
+                    {modules.length}
+                  </span>
+                </div>
 
-              {/* Start/Resume Button */}
-              {firstLesson ? (
-                <button
-                  type="button"
-                  onClick={() => handleTopicClick(firstLesson.slug)}
-                  className="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs hover:shadow transition-all duration-200 active:scale-95"
-                  style={{ backgroundColor: theme.primary }}
-                >
-                  <Play size={14} className="fill-white" />
-                  <span>Start Module 01</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="w-full py-2.5 px-4 rounded-xl bg-slate-200 text-slate-500 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed opacity-75"
-                >
-                  <span>Curriculum in Preparation</span>
-                </button>
-              )}
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]/80 hover:border-slate-300/80 transition-all">
+                  <span className="font-semibold text-[#334155]">Topics</span>
+                  <span className="font-bold text-black">
+                    {totalTopics}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]/80 hover:border-slate-300/80 transition-all">
+                  <span className="font-semibold text-[#334155]">Duration</span>
+                  <span className="font-bold text-black">{theme.duration}</span>
+                </div>
+
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]/80 hover:border-slate-300/80 transition-all">
+                  <span className="font-semibold text-[#334155]">Level</span>
+                  <span className="font-bold text-black">{theme.level}</span>
+                </div>
+              </div>
 
             </div>
           </div>
@@ -596,12 +684,12 @@ export default function CourseDetailsPage() {
         {/* ========================================================
             BOTTOM COMPLETION CTA
            ======================================================== */}
-        <section className="bg-white border-2 border-black rounded-2xl p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <section className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="space-y-1">
-            <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#0B1B2B]">
+            <h3 className="text-xl sm:text-2xl font-sans font-bold text-[#0B1B2B]">
               Ready to learn?
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600">
+            <p className="text-xs sm:text-sm text-[#334155] font-medium">
               {firstLesson 
                 ? `Build your ${courseDisplayName.split(' ')[0]} foundation one concept at a time.` 
                 : 'Modules and lessons will appear dynamically as they are published to MongoDB Atlas.'}
@@ -611,7 +699,7 @@ export default function CourseDetailsPage() {
           {firstLesson ? (
             <button
               type="button"
-              onClick={() => handleTopicClick(firstLesson.slug)}
+              onClick={() => handleTopicClick(firstLesson._id)}
               className="px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-2 shadow-xs hover:shadow transition-all duration-200 active:scale-95 self-start sm:self-auto shrink-0"
               style={{ backgroundColor: theme.primary }}
             >

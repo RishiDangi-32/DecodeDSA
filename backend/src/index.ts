@@ -26,6 +26,7 @@ import mediaRoutes from './routes/mediaRoutes';
 import statsRoutes from './routes/statsRoutes';
 import searchRoutes from './routes/searchRoutes';
 import studentRoutes from './routes/studentRoutes';
+import compilerRoutes from './routes/compilerRoutes';
 
 // Connect to database
 connectDB();
@@ -44,6 +45,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api/compile', compilerRoutes);
 
 // Base route checker
 app.get('/health', (req, res) => {

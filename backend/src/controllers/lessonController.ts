@@ -84,7 +84,7 @@ export const getLessonBySlug = async (req: Request, res: Response, next: NextFun
 // POST /lessons - Create Lesson
 export const createLesson = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { moduleId, title, slug, shortDescription, content, featuredImage, status } = req.body;
+    const { moduleId, title, content, simulationHtml, youtubeUrl, practiceQuestions, status } = req.body;
 
     if (!moduleId) {
       res.status(400).json({ success: false, message: 'Module ID is required.' });
@@ -99,24 +99,13 @@ export const createLesson = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    const lessonSlug = slug
-      ? slugify(slug, { lower: true, strict: true })
-      : slugify(title, { lower: true, strict: true });
-
-    // Check duplicate slug
-    const existing = await Lesson.findOne({ slug: lessonSlug });
-    if (existing) {
-      res.status(400).json({ success: false, message: 'Duplicate Slug: A lesson with this slug already exists.' });
-      return;
-    }
-
     const lesson = new Lesson({
       moduleId,
       title,
-      slug: lessonSlug,
-      shortDescription,
       content,
-      featuredImage,
+      simulationHtml: (simulationHtml && typeof simulationHtml === 'string' && simulationHtml.trim()) ? simulationHtml.trim() : undefined,
+      youtubeUrl: (youtubeUrl && typeof youtubeUrl === 'string' && youtubeUrl.trim()) ? youtubeUrl.trim() : undefined,
+      practiceQuestions: Array.isArray(practiceQuestions) ? practiceQuestions : [],
       status: status || 'draft'
     });
 
@@ -132,7 +121,7 @@ export const createLesson = async (req: Request, res: Response, next: NextFuncti
 export const updateLesson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { moduleId, title, slug, shortDescription, content, featuredImage, status } = req.body;
+    const { moduleId, title, content, simulationHtml, youtubeUrl, practiceQuestions, status } = req.body;
 
     const lesson = await Lesson.findById(id);
     if (!lesson) {
@@ -140,34 +129,43 @@ export const updateLesson = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
+    const unsetFields: Record<string, 1> = { slug: 1, shortDescription: 1, featuredImage: 1 };
+
     if (moduleId) lesson.moduleId = moduleId;
     if (title) lesson.title = title;
-    if (shortDescription !== undefined) lesson.shortDescription = shortDescription;
     if (content) lesson.content = content;
-    if (featuredImage !== undefined) lesson.featuredImage = featuredImage;
     if (status) lesson.status = status;
 
-    if (slug) {
-      const lessonSlug = slugify(slug, { lower: true, strict: true });
-      if (lessonSlug !== lesson.slug) {
-        const existing = await Lesson.findOne({ slug: lessonSlug });
-        if (existing) {
-          res.status(400).json({ success: false, message: 'Duplicate Slug: A lesson with this slug already exists.' });
-          return;
-        }
-        lesson.slug = lessonSlug;
-      }
-    } else if (title && title !== lesson.title) {
-      const lessonSlug = slugify(title, { lower: true, strict: true });
-      if (lessonSlug !== lesson.slug) {
-        const existing = await Lesson.findOne({ slug: lessonSlug });
-        if (!existing) {
-          lesson.slug = lessonSlug;
-        }
+    if (simulationHtml !== undefined) {
+      if (simulationHtml && typeof simulationHtml === 'string' && simulationHtml.trim()) {
+        lesson.simulationHtml = simulationHtml.trim();
+      } else {
+        lesson.simulationHtml = undefined;
+        unsetFields.simulationHtml = 1;
       }
     }
 
+    if (youtubeUrl !== undefined) {
+      if (youtubeUrl && typeof youtubeUrl === 'string' && youtubeUrl.trim()) {
+        lesson.youtubeUrl = youtubeUrl.trim();
+      } else {
+        lesson.youtubeUrl = undefined;
+        unsetFields.youtubeUrl = 1;
+      }
+    }
+
+    if (practiceQuestions !== undefined) {
+      lesson.practiceQuestions = Array.isArray(practiceQuestions) ? (practiceQuestions as any) : [];
+      lesson.markModified('practiceQuestions');
+    }
+
     await lesson.save();
+
+    // Ensure removed fields are unset in the database document
+    await Lesson.updateOne(
+      { _id: id },
+      { $unset: unsetFields }
+    );
 
     res.status(200).json({ success: true, data: lesson });
   } catch (error) {

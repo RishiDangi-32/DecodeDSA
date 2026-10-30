@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import Course from '../models/Course';
 import Module from '../models/Module';
 import Lesson from '../models/Lesson';
@@ -49,7 +50,11 @@ export const getStudentLesson = async (req: Request, res: Response, next: NextFu
   try {
     const { lessonSlug } = req.params;
 
-    const lesson = await Lesson.findOne({ slug: lessonSlug, status: 'published' })
+    const query = mongoose.isValidObjectId(lessonSlug)
+      ? { _id: lessonSlug, status: 'published' }
+      : { slug: lessonSlug, status: 'published' };
+
+    const lesson = await Lesson.findOne(query)
       .populate({
         path: 'moduleId',
         select: 'name courseId',

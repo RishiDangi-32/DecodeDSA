@@ -100,7 +100,7 @@ export default function Developer() {
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
                 <ProfileAvatar fallbackText="RDB" alt="Raghav Deepal Behere" />
                 <div className="space-y-2 pt-2">
-                  <h3 className="text-2xl font-extrabold text-brand-text-white">Raghav Deepal Behere</h3>
+                  <h3 className="text-2xl font-extrabold text-brand-text-white">Raghav Deepak Behere</h3>
                   <p className="text-sm font-bold text-brand-cyan uppercase tracking-wider">Developer</p>
                   <p className="text-xs font-semibold text-cyan-200">Graphics & Logic Designer</p>
                 </div>

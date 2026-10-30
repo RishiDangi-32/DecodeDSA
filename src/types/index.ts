@@ -22,6 +22,16 @@ export interface Module {
   updatedAt: string;
 }
 
+export interface PracticeQuestion {
+  _id?: string;
+  type: 'mcq' | 'short_answer';
+  question: string;
+  image?: string; // Optional screenshot / diagram
+  options?: string[]; // for mcq
+  correctAnswer: string | number; // option index (number) for MCQ or text (string) for short answer
+  explanation?: string;
+}
+
 export interface Lesson {
   _id: string;
   moduleId: string | { 
@@ -30,9 +40,12 @@ export interface Lesson {
     courseId: string | { _id: string; name: string } 
   };
   title: string;
-  slug: string;
+  slug?: string;
   shortDescription?: string;
   content: any; // Structured Tiptap JSON node
+  simulationHtml?: string;
+  youtubeUrl?: string;
+  practiceQuestions?: PracticeQuestion[];
   featuredImage?: string;
   status: 'draft' | 'published';
   createdAt: string;
